@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronRight, MoreHorizontal, Plus, Trash2 } from "lucide-react";
-import { deleteCategory } from "@/app/actions";
+import { ChevronRight, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { deleteCategory, renameCategory } from "@/app/actions";
 import type { Category } from "@/lib/types";
 import { CategoryDialog } from "@/components/category-dialog";
 import { ItemDialog } from "@/components/item-dialog";
@@ -27,6 +27,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function CategoryHeader({
   category,
@@ -39,6 +48,7 @@ export function CategoryHeader({
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [subOpen, setSubOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
@@ -84,6 +94,10 @@ export function CategoryHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => setRenameOpen(true)}>
+              <Pencil className="size-3.5" />
+              Renomear
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setSubOpen(true)}>
               <Plus className="size-3.5" />
               Nova subcategoria
@@ -109,10 +123,44 @@ export function CategoryHeader({
         onOpenChange={setSubOpen}
       />
 
+      {/* Dialog de renomear */}
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <form
+            action={async (formData) => {
+              await renameCategory(formData);
+              setRenameOpen(false);
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle>Renomear categoria</DialogTitle>
+            </DialogHeader>
+
+            <input type="hidden" name="id" value={category.id} />
+
+            <div className="space-y-2 py-4">
+              <Label htmlFor="rename-category">Novo nome</Label>
+              <Input
+                id="rename-category"
+                name="name"
+                required
+                autoFocus
+                maxLength={80}
+                defaultValue={category.name}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button type="submit">Salvar</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir “{category.name}”?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir &ldquo;{category.name}&rdquo;?</AlertDialogTitle>
             <AlertDialogDescription>
               Isso apaga também as subcategorias e{" "}
               {itemCount === 1 ? "o item" : `os ${itemCount} itens`} dentro
@@ -131,3 +179,4 @@ export function CategoryHeader({
     </header>
   );
 }
+
