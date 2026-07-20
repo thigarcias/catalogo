@@ -25,6 +25,8 @@ export type Extracted = {
   rating: number | null;
   value_score: number | null;
   notes: string | null;
+  pros: string[];
+  cons: string[];
   price_source: Source;
   /** Como o dado foi obtido, para a UI explicar ao usuario. */
   method: "leitura" | "busca" | "nenhum";
@@ -45,6 +47,8 @@ const SCHEMA = {
     "rating",
     "value_score",
     "notes",
+    "pros",
+    "cons",
   ],
   properties: {
     name: {
@@ -75,6 +79,18 @@ const SCHEMA = {
       type: ["string", "null"],
       description:
         "Especificacoes objetivas para comparar: capacidade, dimensoes, consumo, voltagem. Sem marketing. Ate 2 frases.",
+    },
+    pros: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "Ate 4 pontos positivos concretos, baseados no conteudo recebido e nas avaliacoes de quem comprou. Frases curtas. Array vazio se nao houver base.",
+    },
+    cons: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "Ate 4 pontos negativos, ressalvas ou reclamacoes recorrentes. Frases curtas. Nao invente defeito para preencher: array vazio e uma resposta valida.",
     },
   },
 } as const;
@@ -190,6 +206,8 @@ async function finish(
     rating: asNumber(data.rating),
     value_score: asNumber(data.value_score),
     notes: asString(data.notes),
+    pros: asStringArray(data.pros),
+    cons: asStringArray(data.cons),
     price_source:
       price == null ? "manual" : method === "leitura" ? "extraido" : "estimado",
     method,
@@ -233,4 +251,13 @@ function asString(v: unknown): string | null {
 
 function asNumber(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+function asStringArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((x): x is string => typeof x === "string")
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .slice(0, 6);
 }

@@ -1,11 +1,17 @@
 "use client";
 
-import { ExternalLink, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react";
+import { useState } from "react";
 import {
-  deleteItem,
-  setItemStatus,
-  toggleFavorite,
-} from "@/app/actions";
+  ChevronDown,
+  ExternalLink,
+  Minus,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Star,
+  Trash2,
+} from "lucide-react";
+import { deleteItem, setItemStatus, toggleFavorite } from "@/app/actions";
 import {
   formatPrice,
   SOURCE_LABEL,
@@ -16,6 +22,7 @@ import { ItemDialog } from "@/components/item-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,21 +36,28 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const STATUS_STYLE: Record<Item["status"], string> = {
-  candidato: "",
-  descartado: "opacity-55",
-  comprado: "",
-};
+export function ItemCard({
+  item,
+  selected,
+  onSelectedChange,
+}: {
+  item: Item;
+  selected: boolean;
+  onSelectedChange: (selected: boolean) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
 
-export function ItemCard({ item }: { item: Item }) {
   const price = formatPrice(item.price, item.currency);
   const estimated = item.price_source === "estimado";
+  const opinions = item.pros.length + item.cons.length;
 
   return (
     <Card
-      className={`group relative gap-0 overflow-hidden p-0 ${STATUS_STYLE[item.status]}`}
+      className={`group relative gap-0 overflow-hidden p-0 transition-shadow ${
+        item.status === "descartado" ? "opacity-55" : ""
+      } ${selected ? "ring-2 ring-primary" : ""}`}
     >
-      <div className="flex aspect-4/3 items-center justify-center overflow-hidden bg-muted/40">
+      <div className="relative flex aspect-4/3 items-center justify-center overflow-hidden bg-muted/40">
         {item.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -55,6 +69,21 @@ export function ItemCard({ item }: { item: Item }) {
         ) : (
           <span className="text-xs text-muted-foreground">Sem imagem</span>
         )}
+
+        {/* Sempre visivel de proposito: escondido atras de :hover, exigia dois
+            toques no desktop e ficava inalcancavel em telas de toque. */}
+        <div
+          className={`absolute top-2 left-2 transition-opacity ${
+            selected ? "opacity-100" : "opacity-70 hover:opacity-100"
+          }`}
+        >
+          <Checkbox
+            checked={selected}
+            onCheckedChange={(v) => onSelectedChange(v === true)}
+            aria-label={`Selecionar ${item.name} para comparar`}
+            className="bg-background shadow-sm"
+          />
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-4">
@@ -121,6 +150,40 @@ export function ItemCard({ item }: { item: Item }) {
           <p className="line-clamp-2 text-xs text-muted-foreground">
             {item.notes}
           </p>
+        )}
+
+        {opinions > 0 && (
+          <div>
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <ChevronDown
+                className={`size-3.5 transition-transform ${expanded ? "rotate-180" : ""}`}
+              />
+              {expanded ? "Ocultar" : "Ver"} opiniões
+              <span className="text-muted-foreground/70">({opinions})</span>
+            </button>
+
+            {expanded && (
+              <div className="mt-2 space-y-2 border-t pt-2">
+                {item.pros.map((p, i) => (
+                  <p key={`p${i}`} className="flex gap-1.5 text-xs">
+                    <Plus className="mt-0.5 size-3 shrink-0 text-emerald-600 dark:text-emerald-500" />
+                    <span>{p}</span>
+                  </p>
+                ))}
+                {item.cons.map((c, i) => (
+                  <p key={`c${i}`} className="flex gap-1.5 text-xs">
+                    <Minus className="mt-0.5 size-3 shrink-0 text-red-600 dark:text-red-500" />
+                    <span>{c}</span>
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         <div className="mt-auto flex items-center justify-between pt-1">

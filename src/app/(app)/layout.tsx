@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { buildTree, type Category } from "@/lib/types";
 import { AppSidebar } from "@/components/app-sidebar";
+import { CatalogChat } from "@/components/catalog-chat";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function AppLayout({
@@ -20,6 +21,7 @@ export default async function AppLayout({
     <SidebarProvider>
       <AppSidebar tree={tree} />
       <SidebarInset>{children}</SidebarInset>
+      <CatalogChat />
     </SidebarProvider>
   );
 }

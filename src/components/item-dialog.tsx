@@ -36,6 +36,8 @@ type Fields = {
   image_url: string;
   status: string;
   notes: string;
+  pros: string;
+  cons: string;
 };
 
 function fieldsFrom(item?: Item): Fields {
@@ -49,6 +51,8 @@ function fieldsFrom(item?: Item): Fields {
     image_url: item?.image_url ?? "",
     status: item?.status ?? "candidato",
     notes: item?.notes ?? "",
+    pros: item?.pros?.join("\n") ?? "",
+    cons: item?.cons?.join("\n") ?? "",
   };
 }
 
@@ -113,6 +117,8 @@ export function ItemDialog({
           (data.value_score != null ? String(data.value_score) : ""),
         image_url: f.image_url || (data.image_url ?? ""),
         notes: f.notes || (data.notes ?? ""),
+        pros: f.pros || (data.pros ?? []).join("\n"),
+        cons: f.cons || (data.cons ?? []).join("\n"),
       }));
 
       if (data.price != null) setPriceSource(data.price_source as Source);
@@ -298,6 +304,41 @@ export function ItemDialog({
                 value={fields.notes}
                 onChange={(e) => set("notes")(e.target.value)}
               />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="pros">
+                  Prós
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">
+                    · um por linha
+                  </span>
+                </Label>
+                <Textarea
+                  id="pros"
+                  name="pros"
+                  rows={4}
+                  placeholder={"Silenciosa\nMuito espaço no freezer"}
+                  value={fields.pros}
+                  onChange={(e) => set("pros")(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cons">
+                  Contras
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">
+                    · um por linha
+                  </span>
+                </Label>
+                <Textarea
+                  id="cons"
+                  name="cons"
+                  rows={4}
+                  placeholder={"Cara\nNão cabe no vão da cozinha"}
+                  value={fields.cons}
+                  onChange={(e) => set("cons")(e.target.value)}
+                />
+              </div>
             </div>
           </div>
 

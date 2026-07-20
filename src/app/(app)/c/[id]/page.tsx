@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice, type Category, type Item } from "@/lib/types";
 import { CategoryHeader } from "@/components/category-header";
-import { ItemCard } from "@/components/item-card";
+import { ItemGrid } from "@/components/item-grid";
 import { ItemDialog } from "@/components/item-dialog";
 import { Button } from "@/components/ui/button";
 
@@ -101,11 +101,7 @@ export default async function CategoryPage({
             />
           </div>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-4">
-            {list.map((item) => (
-              <ItemCard key={item.id} item={item} />
-            ))}
-          </div>
+          <ItemGrid items={list} />
         )}
       </main>
     </div>

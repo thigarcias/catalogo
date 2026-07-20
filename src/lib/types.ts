@@ -26,11 +26,21 @@ export type Item = {
   rating: number | null;
   value_score: number | null;
   notes: string | null;
+  pros: string[];
+  cons: string[];
   status: ItemStatus;
   is_favorite: boolean;
   created_at: string;
   updated_at: string;
 };
+
+/** Textarea de uma linha por item <-> text[] do Postgres. */
+export function linesToArray(value: string): string[] {
+  return value
+    .split("\n")
+    .map((line) => line.replace(/^\s*[-•*]\s*/, "").trim())
+    .filter(Boolean);
+}
 
 /** Categoria com os filhos aninhados, para renderizar a arvore da sidebar. */
 export type CategoryNode = Category & { children: CategoryNode[] };

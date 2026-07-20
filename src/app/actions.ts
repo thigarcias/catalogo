@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { ItemStatus, Source } from "@/lib/types";
+import { linesToArray, type ItemStatus, type Source } from "@/lib/types";
 
 /** Campo numerico opcional vindo de <input>: "" vira null, "4.499,90" vira 4499.9 */
 function num(value: FormDataEntryValue | null): number | null {
@@ -82,6 +82,8 @@ function itemPayload(formData: FormData) {
     rating: num(formData.get("rating")),
     value_score: num(formData.get("value_score")),
     notes: str(formData.get("notes")),
+    pros: linesToArray(String(formData.get("pros") ?? "")),
+    cons: linesToArray(String(formData.get("cons") ?? "")),
     status: (str(formData.get("status")) ?? "candidato") as ItemStatus,
     source: (str(formData.get("source")) ?? "manual") as Source,
     price_source: (str(formData.get("price_source")) ?? "manual") as Source,
