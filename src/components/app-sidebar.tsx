@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { ChevronRight, Plus } from "lucide-react";
+import { ChevronRight, LayoutDashboard, Plus } from "lucide-react";
 import type { CategoryNode } from "@/lib/types";
 import { CategoryDialog } from "@/components/category-dialog";
 import { ModelConfigDialog } from "@/components/model-config-dialog";
@@ -81,6 +81,7 @@ function CategoryBranch({
 export function AppSidebar({ tree }: { tree: CategoryNode[] }) {
   const params = useParams<{ id?: string }>();
   const activeId = params?.id;
+  const isHome = !activeId;
 
   return (
     <Sidebar>
@@ -89,6 +90,19 @@ export function AppSidebar({ tree }: { tree: CategoryNode[] }) {
       </SidebarHeader>
 
       <SidebarContent>
+        <SidebarGroup>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={isHome}>
+                <Link href="/">
+                  <LayoutDashboard className="size-4" />
+                  <span>Dashboard</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+
         <SidebarGroup>
           <SidebarGroupLabel>Categorias</SidebarGroupLabel>
 
