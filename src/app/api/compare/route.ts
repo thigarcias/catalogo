@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getModel } from "@/lib/openai";
 import { buildCompareContext, COMPARE_SYSTEM } from "@/lib/catalog-context";
 
 export const maxDuration = 60;
@@ -66,7 +67,8 @@ const SCHEMA = {
         properties: {
           label: {
             type: "string",
-            description: "Ex: Preço, Capacidade, Avaliação, Consumo.",
+            description:
+              "No máximo 3 palavras. Ex: Preço, Capacidade útil, Ruído, Consumo, Assistência.",
           },
           winner_index: {
             type: ["integer", "null"],
@@ -84,7 +86,7 @@ const SCHEMA = {
                 value: {
                   type: "string",
                   description:
-                    "Valor curto e comparável. '—' se o dado não existir.",
+                    "Valor CURTO e comparável, no máximo 5 palavras. Ex: '447 L', 'Inverse', 'Twin Cooling', 'Mais silenciosa'. Nunca uma frase explicativa — a explicação vai em strengths/weaknesses.",
                 },
               },
             },
@@ -132,10 +134,11 @@ export async function POST(request: Request) {
   }
 
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const model = await getModel();
 
   try {
     const completion = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL ?? "gpt-5.4-mini",
+      model,
       messages: [
         { role: "system", content: COMPARE_SYSTEM },
         { role: "user", content: `${PROMPT}\n\n${text}` },
@@ -171,12 +174,12 @@ export async function POST(request: Request) {
       // Meia linha preenchida é pior que linha nenhuma num placar.
       criteria: (parsed.criteria ?? [])
         .map((c: Record<string, unknown>) => ({
-          label: String(c.label ?? ""),
+          label: clamp(String(c.label ?? ""), 32),
           winner_id: indexToId(c.winner_index),
           values: (Array.isArray(c.values) ? c.values : [])
             .map((v: Record<string, unknown>) => ({
               item_id: indexToId(v.index),
-              value: String(v.value ?? ""),
+              value: clamp(String(v.value ?? ""), 48),
             }))
             .filter(
               (v: { item_id: string | null; value: string }) =>
@@ -219,6 +222,19 @@ function toStringArray(v: unknown): string[] {
  */
 const NON_ANSWER =
   /(catálogo|catalogo|anúncio|anuncio|listagem|cadastro|sem (dados|informa|alerta|detalh)|não (há|ha|informado|especificado|consta|disponível)|nao (ha|informado|especificado|consta)|informação não|informacao nao|n\/d|desconhecid)/i;
+
+/**
+ * Encurta na fronteira de palavra. O placar precisa ser escaneável de relance:
+ * modelos menores ignoram "no máximo 5 palavras" e devolvem frase inteira, o
+ * que transforma a tabela em prosa. A UI mostra o texto completo no title.
+ */
+function clamp(text: string, max: number): string {
+  const clean = text.trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[,;:.\s]+$/, "")}…`;
+}
 
 function isNonAnswer(text: string): boolean {
   const clean = text.trim();

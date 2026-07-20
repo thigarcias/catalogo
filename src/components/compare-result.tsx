@@ -206,6 +206,7 @@ export function CompareResult({
                       return (
                         <td
                           key={s.item_id}
+                          title={cell?.value}
                           className={`py-2 pl-3 text-xs ${
                             won ? "font-medium" : "text-muted-foreground"
                           }`}

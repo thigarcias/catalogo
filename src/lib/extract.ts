@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getModel } from "@/lib/openai";
 import type { Source } from "@/lib/types";
 
 /**
@@ -33,7 +34,6 @@ export type Extracted = {
   warning: string | null;
 };
 
-const MODEL = process.env.OPENAI_MODEL ?? "gpt-5.4-mini";
 const MAX_PAGE_CHARS = 120_000;
 
 const SCHEMA = {
@@ -135,12 +135,13 @@ async function readPage(url: string): Promise<string | null> {
 async function viaLeitura(
   client: OpenAI,
   url: string,
+  model: string,
 ): Promise<Partial<Extracted> | null> {
   const page = await readPage(url);
   if (!page) return null;
 
   const res = await client.chat.completions.create({
-    model: MODEL,
+    model,
     messages: [
       { role: "system", content: SYSTEM },
       { role: "user", content: `Pagina de ${url}:\n\n${page}` },
@@ -159,9 +160,10 @@ async function viaLeitura(
 async function viaBusca(
   client: OpenAI,
   url: string,
+  model: string,
 ): Promise<Partial<Extracted> | null> {
   const res = await client.responses.create({
-    model: MODEL,
+    model,
     tools: [{ type: "web_search" }],
     input: [
       { role: "system", content: SYSTEM },
@@ -181,13 +183,14 @@ Responda apenas com JSON: {"name":..., "price":..., "store":..., "image_url":...
 
 export async function extractFromUrl(url: string): Promise<Extracted> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const model = await getModel();
 
-  const read = await viaLeitura(client, url);
+  const read = await viaLeitura(client, url, model);
   if (read?.name || read?.price != null) {
     return finish(read, "leitura");
   }
 
-  const searched = await viaBusca(client, url);
+  const searched = await viaBusca(client, url, model);
   if (searched?.name || searched?.price != null) {
     return finish(searched, "busca");
   }

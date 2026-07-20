@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ChevronRight, Plus } from "lucide-react";
 import type { CategoryNode } from "@/lib/types";
 import { CategoryDialog } from "@/components/category-dialog";
+import { ModelConfigDialog } from "@/components/model-config-dialog";
 import {
   Sidebar,
   SidebarContent,
@@ -84,9 +85,7 @@ export function AppSidebar({ tree }: { tree: CategoryNode[] }) {
   return (
     <Sidebar>
       <SidebarHeader className="px-3 py-3">
-        <Link href="/" className="text-sm font-medium tracking-tight">
-          Catálogo
-        </Link>
+        <ModelConfigDialog />
       </SidebarHeader>
 
       <SidebarContent>

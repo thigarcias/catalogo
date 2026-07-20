@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getModel } from "@/lib/openai";
 import { buildCatalogContext, CATALOG_SYSTEM } from "@/lib/catalog-context";
 
 export const maxDuration = 60;
@@ -33,10 +34,11 @@ export async function POST(request: Request) {
 
   const catalog = await buildCatalogContext();
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const model = await getModel();
 
   try {
     const stream = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL ?? "gpt-5.4-mini",
+      model,
       stream: true,
       messages: [
         { role: "system", content: CATALOG_SYSTEM },
