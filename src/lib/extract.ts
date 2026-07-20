@@ -84,13 +84,13 @@ const SCHEMA = {
       type: "array",
       items: { type: "string" },
       description:
-        "Ate 4 pontos positivos concretos, baseados no conteudo recebido e nas avaliacoes de quem comprou. Frases curtas. Array vazio se nao houver base.",
+        "Ate 4 pontos positivos DO PRODUTO, baseados nas specs e nas avaliacoes de quem comprou. Frases curtas. Array vazio se nao houver base.",
     },
     cons: {
       type: "array",
       items: { type: "string" },
       description:
-        "Ate 4 pontos negativos, ressalvas ou reclamacoes recorrentes. Frases curtas. Nao invente defeito para preencher: array vazio e uma resposta valida.",
+        "Ate 4 pontos negativos DO PRODUTO ou reclamacoes recorrentes. Frases curtas. Nao invente defeito para preencher: array vazio e uma resposta valida.",
     },
   },
 } as const;
@@ -101,6 +101,9 @@ Regras:
 - price e sempre o valor A VISTA TOTAL, nunca parcela. Desconfie de valores baixos demais para a categoria.
 - Nao invente URL de imagem. So devolva uma que esteja literalmente no conteudo.
 - Prefira devolver null a chutar. Campo vazio o usuario preenche; campo errado ele nao percebe.
+- pros e cons descrevem o PRODUTO, nunca o anuncio. Nada de disponibilidade,
+  estoque, vendedor, frete, prazo ou promocao: isso muda de loja para loja e
+  fica desatualizado no catalogo no dia seguinte.
 - Escreva em portugues do Brasil.`;
 
 // ---------------------------------------------------------------------------

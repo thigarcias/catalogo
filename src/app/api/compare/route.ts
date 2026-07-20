@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { buildCompareContext, CATALOG_SYSTEM } from "@/lib/catalog-context";
+import { buildCompareContext, COMPARE_SYSTEM } from "@/lib/catalog-context";
 
 export const maxDuration = 60;
 
@@ -95,12 +95,13 @@ const SCHEMA = {
   },
 } as const;
 
-const PROMPT = `Compare os itens e dê um veredito.
+const PROMPT = `Compare estes produtos e dê um veredito.
 
 - Escolha um vencedor. Não empate e não termine em cima do muro.
-- Os critérios devem ser os que REALMENTE separam os itens; ignore o que é igual em todos.
+- Os critérios devem ser os que REALMENTE separam os produtos; ignore o que é igual em todos.
+- Traga critérios de mérito que você conhece e que não estão no catálogo quando forem relevantes: consumo de energia, nível de ruído, qualidade de construção, assistência técnica, problemas recorrentes do modelo.
+- NUNCA use disponibilidade, estoque, vendedor, frete ou promoção como ponto forte ou fraco. Isso é do anúncio, não do produto.
 - Se o preço decisivo estiver marcado como ESTIMADO, diga isso no verdict.
-- Não invente specs que não estão nos dados.
 - Em qualquer texto visível, chame os produtos pelo nome ou marca. A numeração "Item N" é só referência interna.`;
 
 export async function POST(request: Request) {
@@ -137,7 +138,7 @@ export async function POST(request: Request) {
     const completion = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL ?? "gpt-5.4-mini",
       messages: [
-        { role: "system", content: CATALOG_SYSTEM },
+        { role: "system", content: COMPARE_SYSTEM },
         { role: "user", content: `${PROMPT}\n\n${text}` },
       ],
       response_format: {
