@@ -100,30 +100,22 @@ export async function buildCompareContext(
     .map((id) => byId.get(id))
     .filter((i): i is Item => Boolean(i));
 
+  // So a IDENTIDADE do produto vai para o modelo. Nota, specs, pros e contras
+  // do catalogo ficam de fora de proposito: sao leitura de um anuncio, e
+  // mandar isso faz o modelo raciocinar sobre o anuncio em vez do produto --
+  // sintoma tipico era responder "sem dados no catalogo" como se fosse um
+  // ponto fraco. O preco vai separado, marcado como contexto de compra.
   const text = items
     .map((item, index) => {
-      const lines = [`### Item ${index + 1}: ${item.name}`];
-
+      const lines = [`### Item ${index + 1}`, `produto: ${item.name}`];
+      if (item.store) lines.push(`onde: ${item.store}`);
       if (item.price != null) {
         lines.push(
-          `preço: ${formatPrice(item.price, item.currency)}${
-            item.price_source === "estimado"
-              ? " (ESTIMADO por busca, pode estar errado)"
-              : ""
+          `quanto custaria: ${formatPrice(item.price, item.currency)}${
+            item.price_source === "estimado" ? " (estimado, pode variar)" : ""
           }`,
         );
-      } else {
-        lines.push("preço: não informado");
       }
-
-      if (item.store) lines.push(`loja: ${item.store}`);
-      if (item.rating != null) lines.push(`avaliação: ${item.rating}/5`);
-      if (item.value_score != null)
-        lines.push(`custo-benefício declarado: ${item.value_score}/10`);
-      if (item.notes) lines.push(`specs: ${item.notes}`);
-      if (item.pros?.length) lines.push(`prós: ${item.pros.join("; ")}`);
-      if (item.cons?.length) lines.push(`contras: ${item.cons.join("; ")}`);
-
       return lines.join("\n");
     })
     .join("\n\n");
@@ -150,13 +142,16 @@ Regras:
  * qualquer outra loja. A comparacao passa a julgar o PRODUTO; o catalogo
  * entra para identificar qual produto e e quanto voce pagaria.
  */
-export const COMPARE_SYSTEM = `Você compara produtos para ajudar alguém a decidir uma compra de mudança.
+export const COMPARE_SYSTEM = `Você é um especialista em eletrodomésticos e móveis. Compare os PRODUTOS informados pelo que você sabe sobre eles.
 
-Use o seu próprio conhecimento sobre estes produtos — construção, consumo de energia, ruído, durabilidade, reputação da marca, problemas recorrentes relatados por quem usa, facilidade de assistência técnica. Os dados do catálogo servem para identificar QUAL produto é e QUANTO custaria; a avaliação de mérito é sua.
+Você recebe apenas o nome do produto e quanto custaria. Todo o resto — specs, qualidade, reputação — vem do seu próprio conhecimento técnico sobre esses modelos.
 
-Regras:
-- Compare o PRODUTO, não o anúncio. Ignore disponibilidade, estoque, vendedor, frete, prazo de entrega e promoção: isso muda de loja para loja e de semana para semana, e não diz nada sobre o produto ser bom.
-- Preço e loja vêm do catálogo e valem, porque é o que a pessoa pagaria. Preço marcado como ESTIMADO pode estar errado; se ele for decisivo, avise.
-- Se você não conhece um modelo específico, diga isso em vez de inventar. Não atribua specs que você não tem certeza.
-- Voltagem, capacidade e dimensões são do produto e contam normalmente.
+Avalie coisas como: consumo de energia, nível de ruído, capacidade e aproveitamento interno, qualidade de construção e materiais, durabilidade, tecnologia de refrigeração ou motor, rede de assistência técnica, defeitos recorrentes conhecidos do modelo, e o que donos costumam relatar depois de meses de uso.
+
+Regras invioláveis:
+- NUNCA mencione "catálogo", "anúncio", "listagem", "cadastro" ou "os dados fornecidos". O usuário não sabe que essas coisas existem. Ele quer saber qual produto é melhor.
+- NUNCA use "sem informação", "não há dados", "não informado" ou equivalente como valor de critério ou como ponto fraco. Se você não sabe algo, escolha OUTRO critério que você sabe. Um critério que você não domina simplesmente não entra na comparação.
+- NUNCA use disponibilidade, estoque, vendedor, frete, prazo ou promoção: isso é da loja, não do produto.
+- Todo critério deve ser um atributo do produto que exista independente de onde ele é vendido.
+- Se você genuinamente não conhece um dos modelos, diga isso no verdict e baseie-se no que a linha e a marca indicam — mas não invente número específico.
 - Responda em português do Brasil, direto ao ponto.`;

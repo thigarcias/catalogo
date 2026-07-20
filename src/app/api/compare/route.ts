@@ -98,10 +98,9 @@ const SCHEMA = {
 const PROMPT = `Compare estes produtos e dê um veredito.
 
 - Escolha um vencedor. Não empate e não termine em cima do muro.
-- Os critérios devem ser os que REALMENTE separam os produtos; ignore o que é igual em todos.
-- Traga critérios de mérito que você conhece e que não estão no catálogo quando forem relevantes: consumo de energia, nível de ruído, qualidade de construção, assistência técnica, problemas recorrentes do modelo.
-- NUNCA use disponibilidade, estoque, vendedor, frete ou promoção como ponto forte ou fraco. Isso é do anúncio, não do produto.
-- Se o preço decisivo estiver marcado como ESTIMADO, diga isso no verdict.
+- Os critérios devem ser atributos técnicos do produto que você conhece: consumo, ruído, capacidade útil, construção, refrigeração, assistência, defeitos conhecidos do modelo.
+- Todo critério precisa ter um valor CONCRETO para cada produto — um número, uma tecnologia, um veredito curto. Se você não tem valor concreto para todos, escolha outro critério.
+- No máximo um critério pode ser preço.
 - Em qualquer texto visível, chame os produtos pelo nome ou marca. A numeração "Item N" é só referência interna.`;
 
 export async function POST(request: Request) {
@@ -168,18 +167,28 @@ export async function POST(request: Request) {
           weaknesses: toStringArray(s.weaknesses),
         }))
         .filter((s: { item_id: string | null }) => s.item_id),
-      criteria: (parsed.criteria ?? []).map(
-        (c: Record<string, unknown>) => ({
+      // Um critério só entra se tiver valor concreto para TODOS os produtos.
+      // Meia linha preenchida é pior que linha nenhuma num placar.
+      criteria: (parsed.criteria ?? [])
+        .map((c: Record<string, unknown>) => ({
           label: String(c.label ?? ""),
           winner_id: indexToId(c.winner_index),
           values: (Array.isArray(c.values) ? c.values : [])
             .map((v: Record<string, unknown>) => ({
               item_id: indexToId(v.index),
-              value: String(v.value ?? "—"),
+              value: String(v.value ?? ""),
             }))
-            .filter((v: { item_id: string | null }) => v.item_id),
-        }),
-      ),
+            .filter(
+              (v: { item_id: string | null; value: string }) =>
+                v.item_id && !isNonAnswer(v.value),
+            ),
+        }))
+        .filter(
+          (c: { label: string; values: unknown[] }) =>
+            c.label &&
+            !isNonAnswer(c.label) &&
+            c.values.length === items.length,
+        ),
     });
   } catch (error) {
     console.error("[compare]", error);
@@ -196,5 +205,22 @@ function toStringArray(v: unknown): string[] {
     .filter((x): x is string => typeof x === "string")
     .map((x) => x.trim())
     .filter(Boolean)
+    .filter((x) => !isNonAnswer(x))
     .slice(0, 3);
+}
+
+/**
+ * Rede de seguranca deterministica para o que o prompt pede mas nao garante.
+ *
+ * O modelo as vezes devolve "sem alerta especifico no catalogo" ou "nao ha
+ * dados de consumo" como se fosse conteudo. Isso nao e comparacao de produto,
+ * e ocupa uma linha do placar dizendo nada. Melhor sumir com a linha do que
+ * mostrar uma nao-resposta.
+ */
+const NON_ANSWER =
+  /(catálogo|catalogo|anúncio|anuncio|listagem|cadastro|sem (dados|informa|alerta|detalh)|não (há|ha|informado|especificado|consta|disponível)|nao (ha|informado|especificado|consta)|informação não|informacao nao|n\/d|desconhecid)/i;
+
+function isNonAnswer(text: string): boolean {
+  const clean = text.trim();
+  return clean === "" || clean === "—" || clean === "-" || NON_ANSWER.test(clean);
 }
