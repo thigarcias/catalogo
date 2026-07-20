@@ -83,6 +83,54 @@ export async function buildCatalogContext(itemIds?: string[]): Promise<string> {
   return blocks.join("\n\n");
 }
 
+/**
+ * Contexto para comparacao. Os itens sao numerados e o modelo responde com o
+ * indice, nunca com o id: ecoar um UUID inteiro e uma fonte de erro boba, e
+ * um numero de 1 a N nao tem como sair errado sem ser obvio.
+ */
+export async function buildCompareContext(
+  ids: string[],
+): Promise<{ items: Item[]; text: string }> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("items").select("*").in("id", ids);
+
+  // Preserva a ordem em que o usuario selecionou.
+  const byId = new Map((data ?? []).map((i) => [i.id, i as Item]));
+  const items = ids
+    .map((id) => byId.get(id))
+    .filter((i): i is Item => Boolean(i));
+
+  const text = items
+    .map((item, index) => {
+      const lines = [`### Item ${index + 1}: ${item.name}`];
+
+      if (item.price != null) {
+        lines.push(
+          `preço: ${formatPrice(item.price, item.currency)}${
+            item.price_source === "estimado"
+              ? " (ESTIMADO por busca, pode estar errado)"
+              : ""
+          }`,
+        );
+      } else {
+        lines.push("preço: não informado");
+      }
+
+      if (item.store) lines.push(`loja: ${item.store}`);
+      if (item.rating != null) lines.push(`avaliação: ${item.rating}/5`);
+      if (item.value_score != null)
+        lines.push(`custo-benefício declarado: ${item.value_score}/10`);
+      if (item.notes) lines.push(`specs: ${item.notes}`);
+      if (item.pros?.length) lines.push(`prós: ${item.pros.join("; ")}`);
+      if (item.cons?.length) lines.push(`contras: ${item.cons.join("; ")}`);
+
+      return lines.join("\n");
+    })
+    .join("\n\n");
+
+  return { items, text };
+}
+
 export const CATALOG_SYSTEM = `Você ajuda a decidir compras para uma mudança de casa, com base num catálogo de itens que a pessoa montou.
 
 Regras:

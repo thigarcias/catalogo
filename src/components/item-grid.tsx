@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { GitCompare, Loader2, X } from "lucide-react";
 import type { Item } from "@/lib/types";
-import { AiMarkdown } from "@/components/ai-markdown";
+import {
+  CompareResult,
+  type CompareData,
+} from "@/components/compare-result";
 import { ItemCard } from "@/components/item-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +20,8 @@ import {
 export function ItemGrid({ items }: { items: Item[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState<CompareData | null>(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   function toggle(id: string, on: boolean) {
@@ -33,7 +37,8 @@ export function ItemGrid({ items }: { items: Item[] }) {
 
   async function compare() {
     setOpen(true);
-    setResult("");
+    setResult(null);
+    setError("");
     setLoading(true);
 
     try {
@@ -42,24 +47,15 @@ export function ItemGrid({ items }: { items: Item[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: [...selected] }),
       });
+      const data = await res.json();
 
-      if (!res.ok || !res.body) {
-        const data = await res.json().catch(() => ({}));
-        setResult(data.error ?? "Não consegui comparar agora.");
+      if (!res.ok) {
+        setError(data.error ?? "Não consegui comparar agora.");
         return;
       }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let acc = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        acc += decoder.decode(value, { stream: true });
-        setResult(acc);
-      }
+      setResult(data as CompareData);
     } catch {
-      setResult("Falha de conexão.");
+      setError("Falha de conexão.");
     } finally {
       setLoading(false);
     }
@@ -123,14 +119,16 @@ export function ItemGrid({ items }: { items: Item[] }) {
             </DialogDescription>
           </DialogHeader>
 
-          {loading && !result ? (
-            <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+          {loading ? (
+            <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" />
-              Analisando os itens…
+              Apurando o placar…
             </div>
-          ) : (
-            <AiMarkdown>{result}</AiMarkdown>
-          )}
+          ) : error ? (
+            <p className="py-8 text-sm text-destructive">{error}</p>
+          ) : result ? (
+            <CompareResult data={result} items={chosen} />
+          ) : null}
         </DialogContent>
       </Dialog>
     </>
