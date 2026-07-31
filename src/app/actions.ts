@@ -153,3 +153,42 @@ export async function setItemStatus(formData: FormData) {
 
   revalidatePath("/", "layout");
 }
+
+export type AIItemInput = {
+  category_id: string;
+  name: string;
+  url?: string | null;
+  store?: string | null;
+  price?: number | null;
+  notes?: string | null;
+  pros?: string[];
+  cons?: string[];
+  rating?: number | null;
+  value_score?: number | null;
+};
+
+export async function createItemFromAI(data: AIItemInput) {
+  if (!data.category_id || !data.name?.trim()) return;
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("items").insert({
+    category_id: data.category_id,
+    name: data.name.trim(),
+    url: data.url?.trim() || null,
+    store: data.store?.trim() || null,
+    image_url: null,
+    price: data.price ?? null,
+    rating: data.rating ?? null,
+    value_score: data.value_score ?? null,
+    notes: data.notes?.trim() || null,
+    pros: Array.isArray(data.pros) ? data.pros : [],
+    cons: Array.isArray(data.cons) ? data.cons : [],
+    status: "candidato",
+    source: "extraido",
+    price_source: "estimado",
+  });
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
+}
+

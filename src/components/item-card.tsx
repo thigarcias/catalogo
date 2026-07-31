@@ -8,6 +8,7 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  Sparkles,
   Star,
   Trash2,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import {
   type Item,
 } from "@/lib/types";
 import { ItemDialog } from "@/components/item-dialog";
+import { SimilarItemsDialog } from "@/components/similar-items-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -46,6 +48,8 @@ export function ItemCard({
   onSelectedChange: (selected: boolean) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [similarOpen, setSimilarOpen] = useState(false);
+
 
   const price = formatPrice(item.price, item.currency);
   const estimated = item.price_source === "estimado";
@@ -210,6 +214,21 @@ export function ItemCard({
               </Button>
             )}
 
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7 text-primary hover:text-primary hover:bg-primary/10"
+                  onClick={() => setSimilarOpen(true)}
+                  aria-label="Encontrar similares"
+                >
+                  <Sparkles className="size-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Encontrar similares</TooltipContent>
+            </Tooltip>
+
             <ItemDialog
               categoryId={item.category_id}
               item={item}
@@ -237,6 +256,15 @@ export function ItemCard({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => setSimilarOpen(true)}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="size-3.5 text-primary" />
+                  Encontrar similares
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+
                 {(["candidato", "descartado", "comprado"] as const)
                   .filter((s) => s !== item.status)
                   .map((s) => (
@@ -270,6 +298,13 @@ export function ItemCard({
           </div>
         </div>
       </div>
+
+      <SimilarItemsDialog
+        item={item}
+        open={similarOpen}
+        onOpenChange={setSimilarOpen}
+      />
     </Card>
   );
 }
+
