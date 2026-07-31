@@ -78,26 +78,29 @@ const SCHEMA = {
     notes: {
       type: ["string", "null"],
       description:
-        "Especificacoes objetivas para comparar: capacidade, dimensoes, consumo, voltagem. Sem marketing. Ate 2 frases.",
+        "Especificacoes tecnicas objetivas para comparar: capacidade, dimensoes, consumo, voltagem, cor, material. PROIBIDO incluir pros, contras, vantagens ou opinioes no notes. Ate 2 frases.",
     },
     pros: {
       type: "array",
       items: { type: "string" },
       description:
-        "Ate 4 pontos positivos DO PRODUTO, baseados nas specs e nas avaliacoes de quem comprou. Frases curtas. Array vazio se nao houver base.",
+        "Ate 4 pontos positivos DO PRODUTO, baseados nas specs e nas avaliacoes de quem comprou. Frases curtas. NUNCA coloque estes pontos em 'notes'. Array vazio se nao houver base.",
     },
     cons: {
       type: "array",
       items: { type: "string" },
       description:
-        "Ate 4 pontos negativos DO PRODUTO ou reclamacoes recorrentes. Frases curtas. Nao invente defeito para preencher: array vazio e uma resposta valida.",
+        "Ate 4 pontos negativos DO PRODUTO ou reclamacoes recorrentes. Frases curtas. NUNCA coloque estes pontos em 'notes'. Nao invente defeito para preencher: array vazio e uma resposta valida.",
     },
   },
 } as const;
 
 const SYSTEM = `Voce extrai dados de produtos de lojas brasileiras para um catalogo de comparacao de compras.
 
-Regras:
+Regras inviolaveis de separacao de campos:
+- notes/observacoes: EXCLUSIVO para especificacoes tecnicas neutras (ex: capacidade em L/kg, voltagem, dimensoes, consumo kWh, material, modelo). PROIBIDO colocar pros, contras, vantagens ou opinioes neste campo.
+- pros: lista de ate 4 pontos positivos/vantagens reais do produto. Deve ir OBRIGATORIAMENTE no array 'pros', NUNCA no texto de 'notes'.
+- cons: lista de ate 4 pontos negativos/desvantagens/defeitos recorrentes do produto. Deve ir OBRIGATORIAMENTE no array 'cons', NUNCA no texto de 'notes'.
 - price e sempre o valor A VISTA TOTAL, nunca parcela. Desconfie de valores baixos demais para a categoria.
 - Nao invente URL de imagem. So devolva uma que esteja literalmente no conteudo.
 - Prefira devolver null a chutar. Campo vazio o usuario preenche; campo errado ele nao percebe.
@@ -171,7 +174,10 @@ async function viaBusca(
         role: "user",
         content: `Nao foi possivel abrir esta pagina. Pesquise o produto e extraia o que conseguir: ${url}
 
-Responda apenas com JSON: {"name":..., "price":..., "store":..., "image_url":..., "rating":..., "value_score":..., "notes":...}`,
+Responda apenas com JSON no seguinte formato:
+{"name": string|null, "price": number|null, "store": string|null, "image_url": string|null, "rating": number|null, "value_score": number|null, "notes": string|null, "pros": string[], "cons": string[]}
+
+ATENCAO: Mantenha 'notes' apenas para especificacoes tecnicas neutras. Separe pontos positivos no array 'pros' e pontos negativos no array 'cons'.`,
       },
     ],
   });

@@ -123,7 +123,7 @@ export function ModelConfigDialog() {
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Ex: gpt-5.4-nano, gpt-5.4-mini, gpt-5.4, o3-mini
+              Ex: gpt-5.6-luna, gpt-5.4-nano, gpt-5.4-mini, o3-mini
             </p>
           </div>
 

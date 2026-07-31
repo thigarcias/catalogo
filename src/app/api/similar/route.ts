@@ -50,17 +50,17 @@ const SCHEMA = {
           },
           notes: {
             type: "string",
-            description: "Especificações técnicas principais e diferenciais do modelo.",
+            description: "Especificações técnicas neutras e objetivas do modelo (dimensões, capacidade, consumo, etc.). NUNCA inclua prós ou contras aqui.",
           },
           pros: {
             type: "array",
             items: { type: "string" },
-            description: "De 2 a 3 pontos fortes do produto.",
+            description: "De 2 a 3 pontos fortes ou vantagens do produto.",
           },
           cons: {
             type: "array",
             items: { type: "string" },
-            description: "De 1 a 2 pontos fracos ou limitações.",
+            description: "De 1 a 2 pontos fracos, limitações ou reclamações do produto.",
           },
           rating: {
             type: "number",
@@ -153,7 +153,8 @@ Regras:
 2. Cada sugestão deve ter uma indicação realista de onde encontrar (ex: Amazon, Mercado Livre, Magazine Luiza, Kabum, Fast Shop).
 3. Preço estimado em Reais (BRL) realista para o mercado atual.
 4. Forneça uma URL de busca ou link representativo (ex: https://www.google.com/search?q=Nome+Do+Produto).
-5. Responda estritamente em Português do Brasil.`;
+5. OBRIGATÓRIO: O campo 'notes' deve conter APENAS especificações técnicas neutras (ex: dimensões, voltagem, capacidade). NUNCA misture prós e contras no 'notes'. Coloque todos os pontos positivos no array 'pros' e pontos negativos no array 'cons'.
+6. Responda estritamente em Português do Brasil.`;
 
   const userPrompt = `Ache produtos similares para o seguinte item:
 
