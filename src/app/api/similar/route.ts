@@ -67,8 +67,8 @@ const SCHEMA = {
             description: "Nota de avaliação média estimada de 0.0 a 5.0.",
           },
           value_score: {
-            type: "number",
-            description: "Nota de custo-benefício de 0 a 10.",
+            type: "integer",
+            description: "Nota de custo-benefício inteira de 0 a 10.",
           },
         },
       },

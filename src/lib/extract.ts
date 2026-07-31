@@ -216,7 +216,7 @@ async function finish(
     store: asString(data.store),
     image_url: await validateImage(asString(data.image_url)),
     rating: asNumber(data.rating),
-    value_score: asNumber(data.value_score),
+    value_score: asInt(data.value_score),
     notes: asString(data.notes),
     pros: asStringArray(data.pros),
     cons: asStringArray(data.cons),
@@ -263,6 +263,11 @@ function asString(v: unknown): string | null {
 
 function asNumber(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+function asInt(v: unknown): number | null {
+  const n = asNumber(v);
+  return n != null ? Math.round(n) : null;
 }
 
 function asStringArray(v: unknown): string[] {

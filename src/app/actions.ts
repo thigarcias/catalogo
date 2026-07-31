@@ -17,6 +17,14 @@ function num(value: FormDataEntryValue | null): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function int(value: FormDataEntryValue | null | number): number | null {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? Math.round(value) : null;
+  }
+  const parsed = num(value);
+  return parsed != null ? Math.round(parsed) : null;
+}
+
 function str(value: FormDataEntryValue | null): string | null {
   const raw = String(value ?? "").trim();
   return raw || null;
@@ -80,7 +88,7 @@ function itemPayload(formData: FormData) {
     image_url: str(formData.get("image_url")),
     price: num(formData.get("price")),
     rating: num(formData.get("rating")),
-    value_score: num(formData.get("value_score")),
+    value_score: int(formData.get("value_score")),
     notes: str(formData.get("notes")),
     pros: linesToArray(String(formData.get("pros") ?? "")),
     cons: linesToArray(String(formData.get("cons") ?? "")),
@@ -179,7 +187,7 @@ export async function createItemFromAI(data: AIItemInput) {
     image_url: null,
     price: data.price ?? null,
     rating: data.rating ?? null,
-    value_score: data.value_score ?? null,
+    value_score: data.value_score != null ? int(data.value_score) : null,
     notes: data.notes?.trim() || null,
     pros: Array.isArray(data.pros) ? data.pros : [],
     cons: Array.isArray(data.cons) ? data.cons : [],
